@@ -26,7 +26,7 @@ export default function App() {
 
     try {
       // 1. Ask backend to create a ₹2 order
-      const orderResponse = await fetch('http://localhost:5000/create-order', {
+      const orderResponse = await fetch('https://aa-jt42.onrender.com/create-order', {
         method: 'POST',
       });
       const orderData = await orderResponse.json();
