@@ -42,7 +42,7 @@ export default function App() {
         order_id: orderData.id,
         handler: async function (response) {
           // 3. Verify the payment signature on the backend
-          const verifyResponse = await fetch('http://localhost:5000/verify-payment', {
+          const verifyResponse = await fetch('https://aa-jt42.onrender.com/verify-payment', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
