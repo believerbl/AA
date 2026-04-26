@@ -1,0 +1,134 @@
+import { useState } from 'react';
+
+// Utility to load the Razorpay script safely in React
+const loadRazorpayScript = () => {
+  return new Promise((resolve) => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+  });
+};
+
+export default function App() {
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  const handlePayment = async () => {
+    setIsProcessing(true);
+    const res = await loadRazorpayScript();
+
+    if (!res) {
+      alert('Razorpay SDK failed to load. Are you online?');
+      setIsProcessing(false);
+      return;
+    }
+
+    try {
+      // 1. Ask backend to create a ₹2 order
+      const orderResponse = await fetch('http://localhost:5000/create-order', {
+        method: 'POST',
+      });
+      const orderData = await orderResponse.json();
+
+      // 2. Open the Razorpay Checkout Modal
+      const options = {
+        // This line imports your actual test key from the frontend .env file
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID, 
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "ATS Auditor",
+        description: "Resume Roast via AI",
+        order_id: orderData.id,
+        handler: async function (response) {
+          // 3. Verify the payment signature on the backend
+          const verifyResponse = await fetch('http://localhost:5000/verify-payment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              razorpay_order_id: response.razorpay_order_id,
+              razorpay_payment_id: response.razorpay_payment_id,
+              razorpay_signature: response.razorpay_signature,
+            }),
+          });
+
+          const verifyData = await verifyResponse.json();
+
+          if (verifyData.success) {
+            // 4. THE HANDOFF: Redirect to Opal!
+            window.location.href = verifyData.redirectUrl;
+          } else {
+            alert('Payment verification failed!');
+          }
+        },
+        theme: {
+          color: "#10b981" // Matches your emerald green UI
+        }
+      };
+
+      const paymentObject = new window.Razorpay(options);
+      paymentObject.open();
+
+    } catch (error) {
+      console.error("Payment Flow Error:", error);
+      alert("Something went wrong. Please try again.");
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col items-center justify-center p-6 selection:bg-emerald-500/30">
+      
+      <div className="max-w-3xl w-full text-center space-y-10">
+        
+        <div className="space-y-4">
+          <div className="inline-block px-3 py-1 bg-gray-900 border border-gray-800 rounded-full text-sm text-emerald-400 font-mono mb-4">
+            v1.0.0 | Built for Summer 2026 Internships
+          </div>
+          <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-gray-100 to-gray-500">
+            Pass the ATS Bot.<br />
+            <span className="text-emerald-400">Land the Interview.</span>
+          </h1>
+          <p className="text-lg text-gray-400 max-w-2xl mx-auto leading-relaxed">
+            Stop guessing why you are getting auto-rejected. Paste your resume and the job description. Our ruthless AI audits your text and exposes the exact missing keywords holding you back.
+          </p>
+        </div>
+
+        <div className="w-full aspect-video bg-gray-900 border border-gray-800 rounded-2xl flex flex-col items-center justify-center shadow-2xl relative overflow-hidden group">
+          <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/5 to-transparent opacity-50"></div>
+          <span className="text-gray-600 font-mono text-sm z-10">
+            [ Demo GIF Placeholder ]
+          </span>
+        </div>
+
+        <div className="space-y-5 pt-4">
+          <div className="flex items-baseline justify-center gap-2">
+            <span className="text-5xl font-black text-white">₹2</span>
+            <span className="text-gray-500 font-medium">/ audit</span>
+          </div>
+          
+          <button 
+            onClick={handlePayment}
+            disabled={isProcessing}
+            className={`w-full sm:w-auto bg-emerald-500 hover:bg-emerald-400 text-gray-950 font-bold text-xl py-4 px-12 rounded-xl transition-all duration-200 transform shadow-[0_0_20px_rgba(16,185,129,0.25)] ${isProcessing ? 'opacity-70 cursor-not-allowed' : 'hover:-translate-y-1 hover:shadow-[0_0_30px_rgba(16,185,129,0.4)]'}`}
+          >
+            {isProcessing ? "Connecting to UPI..." : "Roast My Resume via UPI"}
+          </button>
+          
+          <p className="text-xs text-gray-600 font-mono flex items-center justify-center gap-1.5">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+            Secured by Razorpay • Instant access upon payment
+          </p>
+        </div>
+      </div>
+
+      <div className="pt-12 pb-4 flex flex-wrap gap-6 text-xs text-gray-600 justify-center font-mono">
+        <span className="cursor-pointer hover:text-emerald-400">Terms & Conditions</span>
+        <span className="cursor-pointer hover:text-emerald-400">Privacy Policy</span>
+        <span className="cursor-pointer hover:text-emerald-400">Cancellation & Refund Policy</span>
+        <span className="cursor-pointer hover:text-emerald-400">Contact Us</span>
+      </div>
+    </div>
+  )
+}
