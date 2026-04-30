@@ -175,7 +175,7 @@ export default function App() {
                     onClick={() => window.location.href = "https://opal.google/app/12ouLSuvDjMOPvBXtfZNR572U3TOUzNeS"} 
                     className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-400 text-gray-950 font-bold text-xl py-4 px-12 rounded-xl transition-all duration-200 transform shadow-[0_0_20px_rgba(16,185,129,0.25)] hover:-translate-y-1 hover:shadow-[0_0_30px_rgba(16,185,129,0.4)] flex items-center justify-center gap-3 mx-auto"
                   >
-                    Launch Opal AI
+                    Launch ATS Auditor
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
                   </button>
                 </div>
