@@ -31,6 +31,12 @@ export default function App() {
       });
       const orderData = await orderResponse.json();
 
+      if (orderData.error) {
+        alert("Razorpay Error: " + orderData.error);
+        setIsProcessing(false);
+        return;
+      }
+
       // 2. Open the Razorpay Checkout Modal
       const options = {
         // This line imports your actual test key from the frontend .env file
