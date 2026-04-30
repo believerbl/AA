@@ -24,6 +24,7 @@ app.post('/create-order', async (req, res) => {
         const order = await razorpay.orders.create(options);
         res.status(200).json(order);
     } catch (error) {
+        console.error("RAZORPAY REJECTION REASON:", error);
         res.status(500).json({ error: error.message });
     }
 });
