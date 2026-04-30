@@ -18,7 +18,7 @@ export default function App() {
   const [hasAccess, setHasAccess] = useState(false);
   const [isCheckingAccess, setIsCheckingAccess] = useState(false);
 
-  // --- NEW: Check if the user has already paid ---
+  // --- Check if the user has already paid ---
   useEffect(() => {
     const checkUserAccess = async () => {
       if (user?.primaryEmailAddress?.emailAddress) {
@@ -42,7 +42,7 @@ export default function App() {
     };
 
     checkUserAccess();
-  }, [user]); // Re-run this if the user logs in/changes
+  }, [user]);
 
   const handlePayment = async () => {
     setIsProcessing(true);
@@ -93,7 +93,6 @@ export default function App() {
           if (verifyData.success) {
             // INSTANT UNLOCK! No refresh needed.
             setHasAccess(true); 
-            alert('Payment successful! Lifetime access unlocked.');
           } else {
             alert('Payment verification failed!');
           }
@@ -130,7 +129,7 @@ export default function App() {
         
         <div className="space-y-4">
           <div className="inline-block px-3 py-1 bg-gray-900 border border-gray-800 rounded-full text-sm text-emerald-400 font-mono mb-4">
-            v1.0.0 | Built for Summer 2026 Internships
+            v1.0.0 | Built for Summer internships
           </div>
           <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-gray-100 to-gray-500">
             Pass the ATS Bot.<br />
@@ -166,14 +165,27 @@ export default function App() {
               <div className="text-gray-400 font-mono animate-pulse">Checking access status...</div>
             ) : hasAccess ? (
               
-              /* --- THE ACTUAL APP UI GOES HERE --- */
-              <div className="bg-emerald-900/30 border border-emerald-500/50 rounded-xl p-8 text-center space-y-4">
-                 <h2 className="text-2xl font-bold text-emerald-400">Access Granted</h2>
-                 <p className="text-gray-300">Your lifetime access is active. Paste your resume and the job description below to start the audit.</p>
-                 {/* You will replace this placeholder button with your actual AI upload form later */}
-                 <button className="bg-emerald-500 text-gray-950 font-bold py-3 px-8 rounded-lg mt-4">
-                    Open Auditor Tool
-                 </button>
+              /* --- THE ACTUAL APP UI: REDIRECT TO OPAL --- */
+              <div className="bg-emerald-900/30 border border-emerald-500/50 rounded-xl p-8 md:p-12 text-center space-y-6 animate-[fadeIn_0.5s_ease-in-out] shadow-2xl relative overflow-hidden group">
+                <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/10 to-transparent opacity-50 group-hover:opacity-100 transition-opacity duration-500"></div>
+                <div className="relative z-10 space-y-4">
+                  <div className="mx-auto w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center mb-6">
+                    <svg className="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                  </div>
+                  <h2 className="text-3xl md:text-4xl font-extrabold text-emerald-400 tracking-tight">Access Granted</h2>
+                  <p className="text-lg text-gray-300 max-w-lg mx-auto">
+                    Your lifetime license is active. You are now ready to bypass the ATS and land the interview.
+                  </p>
+                </div>
+                <div className="relative z-10 pt-4">
+                  <button 
+                    onClick={() => window.location.href = "https://opal.google/app/12ouLSuvDjMOPvBXtfZNR572U3TOUzNeS"} 
+                    className="w-full sm:w-auto bg-emerald-500 hover:bg-emerald-400 text-gray-950 font-bold text-xl py-4 px-12 rounded-xl transition-all duration-200 transform shadow-[0_0_20px_rgba(16,185,129,0.25)] hover:-translate-y-1 hover:shadow-[0_0_30px_rgba(16,185,129,0.4)] flex items-center justify-center gap-3 mx-auto"
+                  >
+                    Launch Opal AI
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                  </button>
+                </div>
               </div>
 
             ) : (
