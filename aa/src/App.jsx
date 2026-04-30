@@ -140,13 +140,6 @@ export default function App() {
           </p>
         </div>
 
-        <div className="w-full aspect-video bg-gray-900 border border-gray-800 rounded-2xl flex flex-col items-center justify-center shadow-2xl relative overflow-hidden group">
-          <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/5 to-transparent opacity-50"></div>
-          <span className="text-gray-600 font-mono text-sm z-10">
-            [ Demo GIF Placeholder ]
-          </span>
-        </div>
-
         <div className="space-y-5 pt-4">
           
           <SignedOut>
