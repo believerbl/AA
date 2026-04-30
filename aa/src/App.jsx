@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react";
+import { useState, useEffect } from 'react';
+import { SignedIn, SignedOut, SignInButton, UserButton, useUser } from "@clerk/clerk-react";
 
 // Utility to load the Razorpay script safely in React
 const loadRazorpayScript = () => {
@@ -13,7 +13,36 @@ const loadRazorpayScript = () => {
 };
 
 export default function App() {
+  const { user } = useUser(); // Grab the logged-in user from Clerk
   const [isProcessing, setIsProcessing] = useState(false);
+  const [hasAccess, setHasAccess] = useState(false);
+  const [isCheckingAccess, setIsCheckingAccess] = useState(false);
+
+  // --- NEW: Check if the user has already paid ---
+  useEffect(() => {
+    const checkUserAccess = async () => {
+      if (user?.primaryEmailAddress?.emailAddress) {
+        setIsCheckingAccess(true);
+        try {
+          const response = await fetch('https://aa-jt42.onrender.com/check-access', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: user.primaryEmailAddress.emailAddress }),
+          });
+          const data = await response.json();
+          if (data.hasAccess) {
+            setHasAccess(true);
+          }
+        } catch (error) {
+          console.error("Error checking access:", error);
+        } finally {
+          setIsCheckingAccess(false);
+        }
+      }
+    };
+
+    checkUserAccess();
+  }, [user]); // Re-run this if the user logs in/changes
 
   const handlePayment = async () => {
     setIsProcessing(true);
@@ -26,12 +55,8 @@ export default function App() {
     }
 
     try {
-      // 1. Ask backend to create a ₹2 order
-      const orderResponse = await fetch('https://aa-jt42.onrender.com/create-order', {
-        method: 'POST',
-      });
+      const orderResponse = await fetch('https://aa-jt42.onrender.com/create-order', { method: 'POST' });
 
-      // CHECK 1: Did the server crash or return a 500 error?
       if (!orderResponse.ok) {
         const errorText = await orderResponse.text();
         throw new Error(`Backend refused to create order (Status ${orderResponse.status}). Message: ${errorText}`);
@@ -39,12 +64,10 @@ export default function App() {
 
       const orderData = await orderResponse.json();
 
-      // CHECK 2: Did the backend actually generate a valid Razorpay Order ID?
       if (!orderData || !orderData.id) {
         throw new Error("Backend responded, but failed to return a valid Order ID.");
       }
 
-      // 2. Open the Razorpay Checkout Modal (Safe to proceed!)
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID, 
         amount: orderData.amount,
@@ -53,7 +76,7 @@ export default function App() {
         description: "Resume Roast via AI",
         order_id: orderData.id,
         handler: async function (response) {
-          // 3. Verify the payment signature on the backend
+          // Verify payment AND save email to database
           const verifyResponse = await fetch('https://aa-jt42.onrender.com/verify-payment', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -61,25 +84,25 @@ export default function App() {
               razorpay_order_id: response.razorpay_order_id,
               razorpay_payment_id: response.razorpay_payment_id,
               razorpay_signature: response.razorpay_signature,
+              email: user.primaryEmailAddress.emailAddress // Pass the email to the backend!
             }),
           });
 
           const verifyData = await verifyResponse.json();
 
           if (verifyData.success) {
-            window.location.href = verifyData.redirectUrl;
+            // INSTANT UNLOCK! No refresh needed.
+            setHasAccess(true); 
+            alert('Payment successful! Lifetime access unlocked.');
           } else {
             alert('Payment verification failed!');
           }
         },
-        theme: {
-          color: "#10b981"
-        }
+        theme: { color: "#10b981" }
       };
 
       const paymentObject = new window.Razorpay(options);
       
-      // Optional: Handle modal close events gracefully
       paymentObject.on('payment.failed', function (response){
         console.error("Razorpay UI Error:", response.error.description);
       });
@@ -97,7 +120,6 @@ export default function App() {
   return (
     <div className="min-h-screen bg-gray-950 text-gray-100 flex flex-col items-center justify-center p-6 selection:bg-emerald-500/30 relative">
       
-      {/* Profile Picture (Only shows when logged in) */}
       <div className="absolute top-6 right-6">
         <SignedIn>
           <UserButton />
@@ -128,7 +150,6 @@ export default function App() {
 
         <div className="space-y-5 pt-4">
           
-          {/* IF THE USER IS LOGGED OUT */}
           <SignedOut>
             <SignInButton mode="modal">
               <button className="w-full sm:w-auto bg-white hover:bg-gray-200 text-black font-bold text-xl py-4 px-12 rounded-xl transition-all duration-200 shadow-lg mx-auto flex items-center justify-center">
@@ -140,30 +161,49 @@ export default function App() {
             </SignInButton>
           </SignedOut>
 
-          {/* IF THE USER IS LOGGED IN */}
           <SignedIn>
-            <div className="flex items-baseline justify-center gap-2">
-              <span className="text-5xl font-black text-white">₹2</span>
-              <span className="text-gray-500 font-medium">/ Lifetime Access</span>
-            </div>
-            
-            <button 
-              onClick={handlePayment}
-              disabled={isProcessing}
-              className={`w-full sm:w-auto bg-emerald-500 hover:bg-emerald-400 text-gray-950 font-bold text-xl py-4 px-12 rounded-xl transition-all duration-200 transform shadow-[0_0_20px_rgba(16,185,129,0.25)] ${isProcessing ? 'opacity-70 cursor-not-allowed' : 'hover:-translate-y-1 hover:shadow-[0_0_30px_rgba(16,185,129,0.4)]'} mx-auto`}
-            >
-              {isProcessing ? "Connecting to UPI..." : "Unlock Lifetime Access"}
-            </button>
-            
-            <p className="text-xs text-gray-600 font-mono flex items-center justify-center gap-1.5">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-              Secured by Razorpay • Instant access upon payment
-            </p>
+            {isCheckingAccess ? (
+              <div className="text-gray-400 font-mono animate-pulse">Checking access status...</div>
+            ) : hasAccess ? (
+              
+              /* --- THE ACTUAL APP UI GOES HERE --- */
+              <div className="bg-emerald-900/30 border border-emerald-500/50 rounded-xl p-8 text-center space-y-4">
+                 <h2 className="text-2xl font-bold text-emerald-400">Access Granted</h2>
+                 <p className="text-gray-300">Your lifetime access is active. Paste your resume and the job description below to start the audit.</p>
+                 {/* You will replace this placeholder button with your actual AI upload form later */}
+                 <button className="bg-emerald-500 text-gray-950 font-bold py-3 px-8 rounded-lg mt-4">
+                    Open Auditor Tool
+                 </button>
+              </div>
+
+            ) : (
+              
+              /* --- THE PAYWALL UI --- */
+              <>
+                <div className="flex items-baseline justify-center gap-2">
+                  <span className="text-5xl font-black text-white">₹2</span>
+                  <span className="text-gray-500 font-medium">/ Lifetime Access</span>
+                </div>
+                
+                <button 
+                  onClick={handlePayment}
+                  disabled={isProcessing}
+                  className={`w-full sm:w-auto bg-emerald-500 hover:bg-emerald-400 text-gray-950 font-bold text-xl py-4 px-12 rounded-xl transition-all duration-200 transform shadow-[0_0_20px_rgba(16,185,129,0.25)] ${isProcessing ? 'opacity-70 cursor-not-allowed' : 'hover:-translate-y-1 hover:shadow-[0_0_30px_rgba(16,185,129,0.4)]'} mx-auto`}
+                >
+                  {isProcessing ? "Connecting to UPI..." : "Unlock Lifetime Access"}
+                </button>
+                
+                <p className="text-xs text-gray-600 font-mono flex items-center justify-center gap-1.5">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                  Secured by Razorpay • Instant access upon payment
+                </p>
+              </>
+            )}
           </SignedIn>
 
         </div>
       </div>
-
+      
       <div className="pt-12 pb-4 flex flex-wrap gap-6 text-xs text-gray-600 justify-center font-mono">
         <span className="cursor-pointer hover:text-emerald-400">Terms & Conditions</span>
         <span className="cursor-pointer hover:text-emerald-400">Privacy Policy</span>
