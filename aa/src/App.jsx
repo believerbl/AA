@@ -29,17 +29,22 @@ export default function App() {
       const orderResponse = await fetch('https://aa-jt42.onrender.com/create-order', {
         method: 'POST',
       });
-      const orderData = await orderResponse.json();
 
-      if (orderData.error) {
-        alert("Razorpay Error: " + orderData.error);
-        setIsProcessing(false);
-        return;
+      // CHECK 1: Did the server crash or return a 500 error?
+      if (!orderResponse.ok) {
+        const errorText = await orderResponse.text();
+        throw new Error(`Backend refused to create order (Status ${orderResponse.status}). Message: ${errorText}`);
       }
 
-      // 2. Open the Razorpay Checkout Modal
+      const orderData = await orderResponse.json();
+
+      // CHECK 2: Did the backend actually generate a valid Razorpay Order ID?
+      if (!orderData || !orderData.id) {
+        throw new Error("Backend responded, but failed to return a valid Order ID.");
+      }
+
+      // 2. Open the Razorpay Checkout Modal (Safe to proceed!)
       const options = {
-        // This line imports your actual test key from the frontend .env file
         key: import.meta.env.VITE_RAZORPAY_KEY_ID, 
         amount: orderData.amount,
         currency: orderData.currency,
@@ -61,23 +66,28 @@ export default function App() {
           const verifyData = await verifyResponse.json();
 
           if (verifyData.success) {
-            // 4. THE HANDOFF: Redirect to Opal!
             window.location.href = verifyData.redirectUrl;
           } else {
             alert('Payment verification failed!');
           }
         },
         theme: {
-          color: "#10b981" // Matches your emerald green UI
+          color: "#10b981"
         }
       };
 
       const paymentObject = new window.Razorpay(options);
+      
+      // Optional: Handle modal close events gracefully
+      paymentObject.on('payment.failed', function (response){
+        console.error("Razorpay UI Error:", response.error.description);
+      });
+
       paymentObject.open();
 
     } catch (error) {
       console.error("Payment Flow Error:", error);
-      alert("Something went wrong. Please try again.");
+      alert("Order Creation Failed: " + error.message);
     } finally {
       setIsProcessing(false);
     }
