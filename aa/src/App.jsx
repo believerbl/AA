@@ -55,7 +55,12 @@ export default function App() {
     }
 
     try {
-      const orderResponse = await fetch('https://aa-jt42.onrender.com/create-order', { method: 'POST' });
+      // 1. Ask backend to create a ₹2 order AND send the user's email
+      const orderResponse = await fetch('https://aa-jt42.onrender.com/create-order', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.primaryEmailAddress.emailAddress }), // Tell Razorpay who is paying
+      });
 
       if (!orderResponse.ok) {
         const errorText = await orderResponse.text();
