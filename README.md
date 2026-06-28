@@ -36,19 +36,19 @@ Ensure you have the following installed on your local machine:
 *   Git
 
 ### 1. Clone the Repository
-### 2. Backend Setup (/aa-backend):
+### 2. Backend Setup (/aa-backend): <br>
 {
 cd aa-backend <br>
 npm install
 }
 
-Environment Variables:
+Environment Variables: <br>
 {
 PORT=5000 <br>
 MONGO_URI=your_mongodb_connection_string
 }
 
-Start the Server:
+Start the Server: <br>
 {
 npm start <br>
 npm run dev
@@ -62,7 +62,7 @@ cd aa-backend <br>
 npm install
 }
 
-Start the Client:
+Start the Client: <br>
 {
 npm run dev
 }
