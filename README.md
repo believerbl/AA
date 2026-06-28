@@ -38,27 +38,27 @@ Ensure you have the following installed on your local machine:
 ### 1. Clone the Repository
 ### 2. Backend Setup (/aa-backend):
 {
-cd aa-backend
+cd aa-backend <br>
 npm install
 }
 
 Environment Variables:
 {
-PORT=5000
+PORT=5000 <br>
 MONGO_URI=your_mongodb_connection_string
 }
 
 Start the Server:
 {
-npm start
+npm start <br>
 npm run dev
-}
+} <br>
 The API will start running on http://localhost:5000
 
 
 ### 3. Frontend Setup (/aa):
 {
-cd aa-backend
+cd aa-backend <br>
 npm install
 }
 
@@ -69,17 +69,17 @@ npm run dev
 
 📁 Directory Structure:
 
-├── aa/                     # React Frontend Environment
-│   ├── public/             # Static assets (favicons, etc.)
-│   ├── src/                # React source code (App.jsx, main.jsx, components)
-│   ├── index.html          # HTML entry point
-│   ├── vite.config.js      # Vite build configuration
-│   └── package.json        # Frontend dependencies
-│
-└── aa-backend/             # Node.js/Express Backend Environment
-    ├── server.js           # API Entry point & Server setup
-    ├── package.json        # Backend dependencies (Express, Mongoose, etc.)
-    └── .env                # Backend environment variables (Not tracked)
+├── aa/                     # React Frontend Environment <br>
+│   ├── public/             # Static assets (favicons, etc.) <br>
+│   ├── src/                # React source code (App.jsx, main.jsx, components)<br>
+│   ├── index.html          # HTML entry point<br>
+│   ├── vite.config.js      # Vite build configuration <br>
+│   └── package.json        # Frontend dependencies <br>
+│ <br>
+└── aa-backend/             # Node.js/Express Backend Environment <br>
+    ├── server.js           # API Entry point & Server setup <br>
+    ├── package.json        # Backend dependencies (Express, Mongoose, etc.) <br>
+    └── .env                # Backend environment variables (Not tracked) <br>
 
 ```bash
 git clone [https://github.com/believerbl/](https://github.com/believerbl/)[YOUR-REPO-NAME].git
