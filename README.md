@@ -51,7 +51,6 @@ MONGO_URI=your_mongodb_connection_string
 Start the Server:
 {
 npm start
-# or use nodemon for development
 npm run dev
 }
 The API will start running on http://localhost:5000
